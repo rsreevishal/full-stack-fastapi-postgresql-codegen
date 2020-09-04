@@ -1,0 +1,67 @@
+from typing import List
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.api.utils.db import get_db
+from app.api.utils.security import get_current_active_user
+from app.db_models.user.user import User
+{orm_import}
+{crud_import}
+{pydantic_import}
+from starlette.requests import Request
+import logging
+
+router = APIRouter()
+logger = logging.getLogger(__name__)
+
+
+@router.get('/', response_model=List[{model_base}])
+def get_{table_name}(
+        request: Request,
+        db_session: Session = Depends(get_db)
+) -> List[{model_base}]:
+    return db_{table_name}.get_all(db_session=db_session, request=request)
+
+
+@router.get('/{{uid}}', response_model={model_base})
+def get_{table_name}_by_id(
+        {uid}: int,
+        db_session: Session = Depends(get_db),
+        user: User = Depends(get_current_active_user)
+) -> {model_base}:
+    return db_{table_name}.get_by_id(db_session, {uid})
+
+
+@router.post('/', response_model={model_base})
+def create_{table_name}(
+        {table_name}: {model_create},
+        db_session: Session = Depends(get_db),
+        user: User = Depends(get_current_active_user)
+) -> {model_base}:
+    return db_{table_name}.create(
+        db_session=db_session,
+        {table_name}_data={table_name},
+        created_by=user.id
+    )
+
+
+@router.put('/{{uid}}', response_model={model_base})
+def update_{table_name}(
+        {uid}: int,
+        {table_name}: {model_update},
+        db_session: Session = Depends(get_db),
+        user: User = Depends(get_current_active_user)
+) -> {model_base}:
+    return db_{table_name}.update(
+        db_session=db_session,
+        {uid}={uid},
+        {table_name}_in={table_name},
+        updated_by=user.id
+    )
+
+
+@router.delete('/{{uid}}')
+def delete_{table_name}(
+        {uid}: int,
+        db_session: Session = Depends(get_db)
+):
+    return db_{table_name}.delete(db_session=db_session, {uid}={uid})

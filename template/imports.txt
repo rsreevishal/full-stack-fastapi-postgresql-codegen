@@ -1,0 +1,11 @@
+{sql_alchemy}
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, Date, ForeignKey, Integer, String, Text, text
+from sqlalchemy.orm import relationship
+from app.db.base_class import Base
+{/sql_alchemy}
+
+{pydantic}
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime, date
+{/pydantic}

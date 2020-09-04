@@ -1,0 +1,58 @@
+from sqlalchemy.orm import Session
+from typing import List
+from fastapi.exceptions import HTTPException
+from datetime import datetime
+{orm_import}
+{pydantic_import}
+from starlette.requests import Request
+from app.crud.db_model_search_filter import DbModelSearchFilter
+
+def get_by_id(db_session: Session, {uid}: int) -> {table}:
+    {table_name} = db_session.query({table}).filter({table}.{uid} == {uid}).first()
+    if not {table_name}:
+        raise HTTPException(status_code=400, detail='requested {table_name} does not exist')
+    return {table_name}
+
+
+def get_all(db_session: Session, request:Request) -> List[{table}]:
+    return DbModelSearchFilter(
+            request=request,
+            db_session=db_session,
+            db_model={table},
+            is_outer_join=True
+        ).get_filtered_data()
+
+
+def create(
+        db_session: Session,
+        {table_name}_data: {model_create},
+        created_by: int
+) -> {table}:
+    {table_name}_obj = {table}(
+        **{table_name}_data.dict(exclude_unset=True),
+        created_on=datetime.now(),
+        created_by=created_by
+    )
+    return save(db_session, {table_name}_obj)
+
+
+def update(db_session: Session, {uid}: int, {table_name}_in: {model_update}, updated_by: int):
+    {table_name} = get_by_id(db_session, {uid})
+    for field in {table_name}_in.dict(exclude_unset=True):
+        setattr({table_name}, field, {table_name}_in.dict(exclude_unset=True)[field])
+    setattr({table_name}, 'last_modified_on', datetime.now())
+    setattr({table_name}, 'last_modified_by', updated_by)
+    return save(db_session, {table_name})
+
+
+def delete(db_session: Session, {uid}: int):
+    {table_name} = get_by_id(db_session, {uid})
+    db_session.delete({table_name})
+    db_session.commit()
+
+
+def save(db_session: Session, {table_name}: {table}) -> {table}:
+    db_session.add({table_name})
+    db_session.commit()
+    db_session.refresh({table_name})
+    return {table_name}
